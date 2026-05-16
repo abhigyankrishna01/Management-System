@@ -32,6 +32,10 @@ public final class DBConnection {
     // Cache config so we don't re-read the file on every operation.
     private static volatile Properties cachedConfig;
 
+    // Reuse a single connection for this console app.
+    // (For production apps, prefer a connection pool/DataSource.)
+    private static volatile Connection cachedConnection;
+
     private DBConnection() {
         // Utility class: prevent instantiation.
     }
@@ -50,12 +54,53 @@ public final class DBConnection {
             throw new IllegalStateException("MySQL JDBC Driver not found. Ensure mysql-connector-j dependency is present.", e);
         }
 
-        Properties config = getConfig();
-        String url = getRequired(config, "DB_URL");
-        String user = getRequired(config, "DB_USER");
-        String pass = getRequired(config, "DB_PASSWORD");
+        Connection existing = cachedConnection;
+        if (existing != null) {
+            try {
+                if (!existing.isClosed() && existing.isValid(2)) {
+                    return existing;
+                }
+            } catch (SQLException ignored) {
+                // We'll re-open below.
+            }
+        }
 
-        return DriverManager.getConnection(url, user, pass);
+        synchronized (LOCK) {
+            existing = cachedConnection;
+            if (existing != null) {
+                try {
+                    if (!existing.isClosed() && existing.isValid(2)) {
+                        return existing;
+                    }
+                } catch (SQLException ignored) {
+                    // We'll re-open below.
+                }
+            }
+
+            Properties config = getConfig();
+            String url = getRequired(config, "DB_URL");
+            String user = getRequired(config, "DB_USER");
+            String pass = getRequired(config, "DB_PASSWORD");
+
+            cachedConnection = DriverManager.getConnection(url, user, pass);
+            return cachedConnection;
+        }
+    }
+
+    /**
+     * Close the cached connection (call on application exit).
+     */
+    public static void closeConnection() {
+        Connection conn = cachedConnection;
+        cachedConnection = null;
+
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                System.err.println("Warning: failed to close DB connection: " + e.getMessage());
+            }
+        }
     }
 
     /**

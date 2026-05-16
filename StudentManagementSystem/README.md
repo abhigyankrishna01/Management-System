@@ -1,5 +1,7 @@
 # Student Management System (Java + JDBC + MySQL)
 
+## Project overview
+
 A beginner-to-intermediate **console-based CRUD application** to manage student records using **Java (JDK 25+)**, **JDBC**, and **MySQL**.
 
 This project is structured to be **beginner friendly**, **interview ready**, and **resume worthy**:
@@ -7,8 +9,6 @@ This project is structured to be **beginner friendly**, **interview ready**, and
 - Uses **PreparedStatement everywhere** (safe against SQL injection)
 - Uses **try-with-resources** (no connection leaks)
 - Input validation in the menu layer
-
----
 
 ## Features
 
@@ -25,9 +25,16 @@ Each student has:
 - `department`
 - `cgpa`
 
+## Tech stack
+
+- Java: JDK 25+
+- Build: Maven
+- Database: MySQL
+- Data access: JDBC (`PreparedStatement`, `ResultSet`)
+
 ---
 
-## Project structure
+## Folder structure
 
 ```
 StudentManagementSystem/
@@ -69,7 +76,29 @@ Example `DB_URL`:
 
 ---
 
-## Run in VS Code
+## Screenshots
+
+Add screenshots to make the repo look professional:
+
+- Menu screen
+- CRUD operation examples (add/update/delete)
+- MySQL table records (`SELECT * FROM students;`)
+
+Recommended path:
+
+- `docs/screenshots/`
+
+You can embed images like this after you add them:
+
+<!--
+![Menu](docs/screenshots/menu.png)
+![CRUD example](docs/screenshots/crud.png)
+![DB records](docs/screenshots/db-records.png)
+-->
+
+---
+
+## How to run
 
 ### Option A: Run with Maven (recommended)
 

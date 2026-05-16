@@ -1,6 +1,10 @@
 # Maven
 /target/
 
+# Local build output (non-Maven)
+/bin/
+*.class
+
 # VS Code
 /.vscode/
 

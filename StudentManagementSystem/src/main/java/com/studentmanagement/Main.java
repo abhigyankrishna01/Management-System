@@ -1,6 +1,8 @@
 package com.studentmanagement;
 
 import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLTransientConnectionException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -45,6 +47,9 @@ public class Main {
 
                 System.out.println();
             }
+        } finally {
+            // Close the shared DB connection cleanly on exit.
+            DBConnection.closeConnection();
         }
     }
 
@@ -64,21 +69,22 @@ public class Main {
     private static void addStudentFlow(Scanner sc) {
         System.out.println("\n--- Add Student ---");
 
-        int id = readInt(sc, "Student ID: ");
+        int id = readPositiveInt(sc, "Student ID: ");
         String name = readNonBlank(sc, "Name: ");
         String dept = readNonBlank(sc, "Department: ");
-        double cgpa = readDouble(sc, "CGPA (0-10): ", 0, 10);
-
-        Student student = new Student(id, name, dept, cgpa);
+        float cgpa = readFloat(sc, "CGPA (0-10): ", 0, 10);
 
         try {
+            Student student = new Student(id, name, dept, cgpa);
             boolean inserted = studentDAO.addStudent(student);
             System.out.println(inserted ? "Student added successfully." : "Student was not added.");
         } catch (IllegalArgumentException e) {
             // Example: Duplicate ID
             System.out.println("Error: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            printDbConfigurationError(e);
         } catch (SQLException e) {
-            System.out.println("Database error while adding student: " + e.getMessage());
+            printSqlError("adding student", e);
         }
     }
 
@@ -97,15 +103,17 @@ public class Main {
                 System.out.println(s);
             }
 
+        } catch (IllegalStateException e) {
+            printDbConfigurationError(e);
         } catch (SQLException e) {
-            System.out.println("Database error while fetching students: " + e.getMessage());
+            printSqlError("fetching students", e);
         }
     }
 
     private static void searchStudentFlow(Scanner sc) {
         System.out.println("\n--- Search Student by ID ---");
 
-        int id = readInt(sc, "Enter Student ID: ");
+        int id = readPositiveInt(sc, "Enter Student ID: ");
 
         try {
             Optional<Student> student = studentDAO.searchStudent(id);
@@ -115,15 +123,17 @@ public class Main {
                 System.out.println("Student with ID " + id + " not found.");
             }
 
+        } catch (IllegalStateException e) {
+            printDbConfigurationError(e);
         } catch (SQLException e) {
-            System.out.println("Database error while searching: " + e.getMessage());
+            printSqlError("searching student", e);
         }
     }
 
     private static void updateStudentFlow(Scanner sc) {
         System.out.println("\n--- Update Student ---");
 
-        int id = readInt(sc, "Enter Student ID to update: ");
+        int id = readPositiveInt(sc, "Enter Student ID to update: ");
 
         try {
             Optional<Student> existing = studentDAO.searchStudent(id);
@@ -136,29 +146,34 @@ public class Main {
 
             String name = readNonBlank(sc, "New Name: ");
             String dept = readNonBlank(sc, "New Department: ");
-            double cgpa = readDouble(sc, "New CGPA (0-10): ", 0, 10);
+            float cgpa = readFloat(sc, "New CGPA (0-10): ", 0, 10);
 
             Student updated = new Student(id, name, dept, cgpa);
             boolean ok = studentDAO.updateStudent(updated);
 
             System.out.println(ok ? "Student updated successfully." : "Update failed.");
-
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            printDbConfigurationError(e);
         } catch (SQLException e) {
-            System.out.println("Database error while updating: " + e.getMessage());
+            printSqlError("updating student", e);
         }
     }
 
     private static void deleteStudentFlow(Scanner sc) {
         System.out.println("\n--- Delete Student ---");
 
-        int id = readInt(sc, "Enter Student ID to delete: ");
+        int id = readPositiveInt(sc, "Enter Student ID to delete: ");
 
         try {
             boolean ok = studentDAO.deleteStudent(id);
             System.out.println(ok ? "Student deleted successfully." : "Student with ID " + id + " not found.");
 
+        } catch (IllegalStateException e) {
+            printDbConfigurationError(e);
         } catch (SQLException e) {
-            System.out.println("Database error while deleting: " + e.getMessage());
+            printSqlError("deleting student", e);
         }
     }
 
@@ -179,13 +194,23 @@ public class Main {
         }
     }
 
-    private static double readDouble(Scanner sc, String prompt, double min, double max) {
+    private static int readPositiveInt(Scanner sc, String prompt) {
+        while (true) {
+            int value = readInt(sc, prompt);
+            if (value > 0) {
+                return value;
+            }
+            System.out.println("Please enter a positive integer (> 0). ");
+        }
+    }
+
+    private static float readFloat(Scanner sc, String prompt, float min, float max) {
         while (true) {
             System.out.print(prompt);
             String input = sc.nextLine().trim();
 
             try {
-                double value = Double.parseDouble(input);
+                float value = Float.parseFloat(input);
                 if (value < min || value > max) {
                     System.out.println("Please enter a value between " + min + " and " + max + ".");
                     continue;
@@ -205,6 +230,37 @@ public class Main {
                 return value;
             }
             System.out.println("This field cannot be empty.");
+        }
+    }
+
+    // ------------------------------
+    // Error helpers
+    // ------------------------------
+
+    private static void printDbConfigurationError(IllegalStateException e) {
+        System.out.println("Database configuration error: " + e.getMessage());
+        System.out.println("Fix: Check your .env values for DB_URL, DB_USER, DB_PASSWORD.");
+        System.out.println("Also ensure the MySQL server is running and the database exists: student_management");
+    }
+
+    private static void printSqlError(String action, SQLException e) {
+        if (e == null) {
+            System.out.println("Database error while " + action + ".");
+            return;
+        }
+
+        // These two are common when the DB server is down / cannot be reached.
+        if (e instanceof SQLNonTransientConnectionException || e instanceof SQLTransientConnectionException) {
+            System.out.println("Database unavailable while " + action + ".");
+            System.out.println("Fix: Start MySQL server, verify DB_URL/DB_USER/DB_PASSWORD, and ensure the database exists.");
+        } else {
+            System.out.println("Database error while " + action + ".");
+        }
+
+        // Helpful diagnostics for debugging.
+        System.out.println("Details: " + String.valueOf(e.getMessage()));
+        if (e.getSQLState() != null) {
+            System.out.println("SQLState: " + e.getSQLState() + " | ErrorCode: " + e.getErrorCode());
         }
     }
 }
