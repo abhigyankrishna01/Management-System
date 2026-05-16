@@ -3,7 +3,7 @@
 A beginner-to-intermediate **console-based CRUD application** to manage student records using **Java (JDK 25+)**, **JDBC**, and **MySQL**.
 
 This project is structured to be **beginner friendly**, **interview ready**, and **resume worthy**:
-- Clean OOP design: `model` + `dao` + `db` + `Main`
+- Clean OOP design: `Student` + `StudentDAO` + `DBConnection` + `Main`
 - Uses **PreparedStatement everywhere** (safe against SQL injection)
 - Uses **try-with-resources** (no connection leaks)
 - Input validation in the menu layer
@@ -37,12 +37,9 @@ StudentManagementSystem/
 │  └─ schema.sql       # DB + table creation
 └─ src/main/java/com/studentmanagement/
    ├─ Main.java
-   ├─ dao/
-   │  └─ StudentDAO.java
-   ├─ db/
-   │  └─ DBConnection.java
-   └─ model/
-      └─ Student.java
+   ├─ Student.java
+   ├─ StudentDAO.java
+   └─ DBConnection.java
 ```
 
 ---

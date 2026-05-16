@@ -9,12 +9,10 @@ CREATE DATABASE IF NOT EXISTS student_management;
 USE student_management;
 
 CREATE TABLE IF NOT EXISTS students (
-  id INT NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  department VARCHAR(100) NOT NULL,
-  cgpa DECIMAL(4,2) NOT NULL,
-  PRIMARY KEY (id),
-  CHECK (cgpa >= 0 AND cgpa <= 10)
+  id INT PRIMARY KEY,
+  name VARCHAR(100),
+  department VARCHAR(50),
+  cgpa FLOAT
 );
 
 -- Optional: a few sample rows

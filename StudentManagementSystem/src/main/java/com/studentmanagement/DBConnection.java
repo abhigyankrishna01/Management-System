@@ -1,4 +1,4 @@
-package com.studentmanagement.db;
+package com.studentmanagement;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

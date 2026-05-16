@@ -1,8 +1,5 @@
 package com.studentmanagement;
 
-import com.studentmanagement.dao.StudentDAO;
-import com.studentmanagement.model.Student;
-
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.studentmanagement.model;
+package com.studentmanagement;
 
 /**
  * Represents a Student entity in our system.

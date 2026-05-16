@@ -1,13 +1,10 @@
-package com.studentmanagement.dao;
-
-import com.studentmanagement.db.DBConnection;
-import com.studentmanagement.model.Student;
+package com.studentmanagement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
